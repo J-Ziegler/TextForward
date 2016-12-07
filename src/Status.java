@@ -1,77 +1,98 @@
 import java.io.Serializable;
-import java.security.InvalidParameterException;
 
 /**
  * Status objects are used during initial contact between the Client/Device
- * and the Server.
+ * and the Server. By utilization of connection codes, accounts are not necessary.
  */
 
 public class Status implements Serializable {
 
-    // TODO: Improve this Javadoc, attach them to the individual enumerated statuses.
-    /**
-     * StatusMessage
-     *
-     * <ul>
-     * <li>Initial: Initial client/device contact. Server returns Accept or Reject based on load.</li>
-     * <li>Device: Identifies the sender as the mobile device that sends/receives data.</li>
-     * <li>DependentClient: Client that requires the server as an intermediary.</li>
-     * <li>IndependentClient: Client that claims it can act as the server.</li>
-     * <li>Accept: Server will accept the client.</li>
-     * <li>Reject: Server rejects the client connection, for whatever reason.</li>
-     * <li>Referral: Matched an IndependentClient, information sent.</li>
-     * <li>Error: Signifies that something went wrong. Created in preparation of future need.</li>
-     * </ul>
-     *
-     */
-    private enum StatusMessage { Initial, Device, DependentClient, IndependentClient, Accept, Reject, Referral, Error}
+    private enum ClientType {
+        Device(0),
+        Client(1),
+        Server(2);
 
-    private StatusMessage msg;
-    private String referredIP;
-    private int referredPort;
+        private int intValue;
 
-    public Status(String msg) {
-        this.msg = StatusMessage.Initial;
-        if ("Initial".equals(msg)) {
-            this.msg = StatusMessage.Initial;
-        } else if ("Device".equals(msg)) {
-            this.msg = StatusMessage.Device;
-        } else if ("DependentClient".equals(msg)) {
-            this.msg = StatusMessage.DependentClient;
-        } else if ("IndependentClient".equals(msg)) {
-            this.msg = StatusMessage.IndependentClient;
-        } else if ("Accept".equals(msg)) {
-            this.msg = StatusMessage.Accept;
-        } else if ("Reject".equals(msg)) {
-            this.msg = StatusMessage.Reject;
-        } else if ("Referral".equals(msg)) {
-            throw new InvalidParameterException("Referrals require an IP and Port to be passed");
-        } else {
-            throw new InvalidParameterException("Cannot create Status with message: " + msg);
+        ClientType(int n) {
+            this.intValue = n;
+        }
+
+        public int getValue() {
+            return this.intValue;
+        }
+
+        public static ClientType fromInt(int i) {
+            for (ClientType cT : ClientType.values()) {
+                if (cT.getValue() == i) {
+                    return cT;
+                }
+            }
+            return null;
         }
     }
 
-    /**
-     * @param ip IP of the IndependentClient
-     * @param port Port for the same
-     *
-     * <p>Create a Referral Status. The message is set to Referral automatically.</p>
+    private enum MessageType {
+        Reject(-1),
+        Contact(0),
+        MatchMade(1);
+
+        private int intValue;
+
+        MessageType(int n) {
+            this.intValue = n;
+        }
+
+        public int getValue() {
+            return this.intValue;
+        }
+
+        public static MessageType fromInt(int i) {
+            for (MessageType cT : MessageType.values()) {
+                if (cT.getValue() == i) {
+                    return cT;
+                }
+            }
+            return null;
+        }
+    }
+
+    /*
+    Message varies based on MessageType:
+    - Contact: Connection Code
+    - Reject: Rejection Reason
+    - MatchMade: Optional Information about the thing.
      */
-    public Status(String ip, int port) {
-        this.msg = StatusMessage.Referral;
-        this.referredIP = ip;
-        this.referredPort = port;
+    private String message;
+    private ClientType clientType;
+    private MessageType messageType;
+
+    /**
+     * Status Messages are used by the Client and Server to exchange
+     * information about the initial connection, or general check-in.
+     *
+     * @param messageType
+     * @param clientType
+     */
+
+    public Status(int messageType, int clientType) {
+        this.messageType = MessageType.fromInt(messageType);
+        this.clientType = ClientType.fromInt(clientType);
     }
 
-    public StatusMessage getMessage() {
-        return this.msg;
+    public Status(int messageType, int clientType, String message) {
+        this.messageType = MessageType.fromInt(messageType);
+        this.clientType = ClientType.fromInt(clientType);
+        this.message = message;
     }
 
-    public String getReferredIP() {
-        return this.referredIP;
-    }
-
-    public int getReferredPort() {
-        return this.referredPort;
+    /**
+     * <p>-1: Rejection Message, either server doesn't like you or the other client dropped.</p>
+     * <p>0: Contact. The message contains a connection/verification code.</p>
+     * <p>1: Match Made. The server is ready</p>
+     */
+    public int getMessageType() {
+        System.out.println("Trying to do a thing");
+        return messageType.getValue();
     }
 }

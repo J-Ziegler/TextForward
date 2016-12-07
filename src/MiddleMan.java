@@ -28,8 +28,8 @@ public class MiddleMan {
                 ObjectInputStream inStrm = new ObjectInputStream(client.getInputStream());
 
 				while (!client.isInputShutdown()) {
-                    Status o = (Status) inStrm.readObject();
-                    outStrm.writeObject(o);
+                    Status clientStatus = (Status) inStrm.readObject();
+                    outStrm.writeObject(new Status(1, 2));
                     outStrm.flush();
                 }
 						
